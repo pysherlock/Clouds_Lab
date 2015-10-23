@@ -2,6 +2,8 @@ package fr.eurecom.dsg.mapreduce;
 
 import java.io.IOException;
 import java.util.StringTokenizer;
+import java.io.BufferedReader;
+import java.io.FileInputStream;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -11,7 +13,6 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-
 
 
 /**
@@ -29,8 +30,8 @@ public class WordCount extends Configured implements Tool {
   @Override
   public int run(String[] args) throws Exception {
 
-    Configuration conf = this.getConf();
-    Job job = null;
+      Configuration conf = this.getConf();
+      Job job = null;
       // TODO: define new job instead of null using conf
 
     // TODO: set job input format
@@ -63,10 +64,15 @@ public class WordCount extends Configured implements Tool {
   }
 }
 
-class WCMapper extends Mapper<Object, // TODO: change Object to input key type
-                              Object, // TODO: change Object to input value type
-                              Object, // TODO: change Object to output key type
-                              Object> { // TODO: change Object to output value type
+class Mapper {
+    String input, output;
+    int input_value, output_value;
+}
+
+class WCMapper extends Mapper<String, // TODO: change Object to input key type
+                              int, // TODO: change Object to input value type
+                              String, // TODO: change Object to output key type
+                              int> { // TODO: change Object to output value type
 
   @Override
   protected void map(Object key, // TODO: change Object to input key type
@@ -74,9 +80,14 @@ class WCMapper extends Mapper<Object, // TODO: change Object to input key type
                      Context context) throws IOException, InterruptedException {
 
       context.write(key, 1);
-
     // TODO: implement the map method (use context.write to emit results)
   }
+
+}
+
+class Reducer {
+    String input, output;
+    int input_value, output_value;
 
 }
 
@@ -89,6 +100,7 @@ class WCReducer extends Reducer<Object, // TODO: change Object to input key type
   protected void reduce(Object key, // TODO: change Object to input key type
                         Iterable<Object> values, // TODO: change Object to input value type
                         Context context) throws IOException, InterruptedException {
+
 
     // TODO: implement the reduce method (use context.write to emit results)
   }
