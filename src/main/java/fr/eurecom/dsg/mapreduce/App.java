@@ -1,9 +1,6 @@
 package fr.eurecom.dsg.mapreduce;
 
-/**
- * Hello world!
- *
- */
+
 public class App 
 {
     public static void main( String[] args )
