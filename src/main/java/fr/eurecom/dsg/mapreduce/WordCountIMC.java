@@ -1,13 +1,22 @@
 package fr.eurecom.dsg.mapreduce;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
@@ -26,8 +35,7 @@ public class WordCountIMC extends Configured implements Tool {
   @Override
   public int run(String[] args) throws Exception {
     
-    Job job = null; // TODO: define new job instead of null using conf e setting
-                    // a name
+    //Job job = null; // TODO: define new job instead of null using conf e setting
 
     // TODO: set job input format
     // TODO: set map class and the map output key and value classes
@@ -38,53 +46,109 @@ public class WordCountIMC extends Configured implements Tool {
     // TODO: set the number of reducers. This is optional and by default is 1
     // TODO: set the jar class
 
-    return job.waitForCompletion(true) ? 0 : 1; // this will execute the job
+      Configuration conf = this.getConf();
+
+      Job job = new Job(conf,"Word Count");
+
+      job.setInputFormatClass(TextInputFormat.class);
+
+      job.setMapperClass(WCIMCMapper.class);
+      job.setMapOutputKeyClass(Text.class);
+      job.setMapOutputValueClass(IntWritable.class);
+
+      job.setReducerClass(WCIMCReducer.class);
+      job.setOutputKeyClass(Text.class);
+      job.setOutputValueClass(IntWritable.class);
+
+      job.setOutputFormatClass(TextOutputFormat.class);
+
+      FileInputFormat.addInputPath(job, new Path(args[1]));
+      FileOutputFormat.setOutputPath(job, new Path(args[2]));
+
+      job.setNumReduceTasks(Integer.parseInt(args[0]));
+
+      job.setJarByClass(WordCount.class);
+
+      job.waitForCompletion(true);
+
+      return 0;
+    //return job.waitForCompletion(true) ? 0 : 1; // this will execute the job
   }
 
   public WordCountIMC (String[] args) {
-    if (args.length != 3) {
-      System.out.println("Usage: WordCountIMC <num_reducers> <input_path> <output_path>");
-      System.exit(0);
-    }
-    this.numReducers = Integer.parseInt(args[0]);
-    this.inputPath = new Path(args[1]);
-    this.outputDir = new Path(args[2]);
+      if (args.length != 3) {
+          System.out.println("Usage: WordCountIMC <num_reducers> <input_path> <output_path>");
+          System.exit(0);
+      }
+      this.numReducers = Integer.parseInt(args[0]);
+      this.inputPath = new Path(args[1]);
+      this.outputDir = new Path(args[2]);
   }
   
   public static void main(String args[]) throws Exception {
-    int res = ToolRunner.run(new Configuration(), new WordCountIMC(args), args);
-    System.exit(res);
+      int res = ToolRunner.run(new Configuration(), new WordCountIMC(args), args);
+      System.exit(res);
   }
 }
 
-class WCIMCMapper extends Mapper<Object, // TODO: change Object to input key
-                                         // type
-                                 Object, // TODO: change Object to input value type
-                                 Object, // TODO: change Object to output key type
-                                 Object> { // TODO: change Object to output value type
+class WCIMCMapper extends Mapper<LongWritable, Text, Text, IntWritable> { // TODO: change Object to output value type
 
-  @Override
-  protected void map(Object key, // TODO: change Object to input key type
-                     Object value, // TODO: change Object to input value type
-                     Context context) throws IOException, InterruptedException {
+    private IntWritable ONE = new IntWritable(1);
+    private Text textValue = new Text();
+    private class array<T1,T2> {
+        T1[] key;
+        T2[] value;
+    }
+    private int is_Exist(String[] list, String word) {
+        for (int i = 0; i < list.length; i++) {
+            if (list[i] == word)
+                return i;
+        }
+        return -1;
+    }
 
-    // * TODO: implement the map method (use context.write to emit results). Use
+    @Override
+    protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
+
+        int index = 0; //index means the word's location if exist
+        String line = value.toString();
+        String[] words = line.split("\\s+"); //split string to tokens
+        array<String, Integer> List = new array<String, Integer>();
+
+        for(int i = 0, j = 0; i < words.length; i++) {
+            index = is_Exist(List.key, words[i]);
+            if(index == -1) {
+                List.key[j] = words[i];
+                List.value[j]++;
+                j++;
+            }
+            else
+                List.value[index]++;
+        }// in-memory combine
+
+        for(int i = 0; i < List.key.length; i++) {
+            textValue.set(List.key[i]);
+            context.write(textValue, new IntWritable(List.value[i]));
+        }
+    }
+    //*TODO: implement the map method (use context.write to emit results). Use
     // the in-memory combiner technique
-  }
-
 }
 
-class WCIMCReducer extends Reducer<Object, // TODO: change Object to input key
-                                           // type
-                                   Object, // TODO: change Object to input value type
-                                   Object, // TODO: change Object to output key type
-                                   Object> { // TODO: change Object to output value type
+class WCIMCReducer extends Reducer<Text, // TODO: change Object to input key
+                                   IntWritable, // TODO: change Object to input value type
+                                   Text, // TODO: change Object to output key type
+                                   IntWritable> { // TODO: change Object to output value type
 
   @Override
-  protected void reduce(Object key, // TODO: change Object to input key type
-                        Iterable<Object> values, // TODO: change Object to input value type
+  protected void reduce(Text word, // TODO: change Object to input key type
+                        Iterable<IntWritable> values, // TODO: change Object to input value type
                         Context context) throws IOException, InterruptedException {
 
-    // TODO: implement the reduce method (use context.write to emit results)
+      int accumulator = 0;
+      for (IntWritable value : values) { //comupte the sum
+          accumulator += value.get();
+      }
+      context.write(word, new IntWritable(accumulator));
   }
 }
