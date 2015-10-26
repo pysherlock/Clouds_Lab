@@ -1,7 +1,7 @@
 package fr.eurecom.dsg.mapreduce;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.HashMap;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -93,42 +93,32 @@ public class WordCountIMC extends Configured implements Tool {
 
 class WCIMCMapper extends Mapper<LongWritable, Text, Text, IntWritable> { // TODO: change Object to output value type
 
-    private IntWritable ONE = new IntWritable(1);
+//    private IntWritable ONE = new IntWritable(1);
     private Text textValue = new Text();
-    private class array<T1,T2> {
-        T1[] key;
-        T2[] value;
-    }
-    private int is_Exist(String[] list, String word) {
-        for (int i = 0; i < list.length; i++) {
-            if (list[i] == word)
-                return i;
-        }
-        return -1;
-    }
+
+    HashMap<String, Integer> map = new HashMap<String, Integer>();
 
     @Override
     protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
 
-        int index = 0; //index means the word's location if exist
         String line = value.toString();
         String[] words = line.split("\\s+"); //split string to tokens
-        array<String, Integer> List = new array<String, Integer>();
 
-        for(int i = 0, j = 0; i < words.length; i++) {
-            index = is_Exist(List.key, words[i]);
-            if(index == -1) {
-                List.key[j] = words[i];
-                List.value[j]++;
-                j++;
+        int length = words.length;
+
+        for(String word : words) {
+            if(map.containsKey(word)) {
+                int new_value = map.get(word);
+                new_value++;
+                map.put(word, new_value);
             }
             else
-                List.value[index]++;
+                map.put(word, 1);
         }// in-memory combine
 
-        for(int i = 0; i < List.key.length; i++) {
-            textValue.set(List.key[i]);
-            context.write(textValue, new IntWritable(List.value[i]));
+        for(String word : map.keySet()) {
+            textValue.set(word);
+            context.write(textValue, new IntWritable(map.get(word)));
         }
     }
     //*TODO: implement the map method (use context.write to emit results). Use
