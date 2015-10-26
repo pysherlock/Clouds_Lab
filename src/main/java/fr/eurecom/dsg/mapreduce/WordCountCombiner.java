@@ -33,22 +33,22 @@ public class WordCountCombiner extends Configured implements Tool {
   private Path outputDir;
 
   @Override
-	public int run(String[] args) throws Exception {
+  public int run(String[] args) throws Exception {
 
     Configuration conf = this.getConf();
 
-    Job job = new Job(conf,"Word Count");
+    Job job = new Job(conf, "Word Count");
 
     job.setInputFormatClass(TextInputFormat.class);
 
-    job.setMapperClass(WCIMCMapper.class);
+    job.setMapperClass(WCMapperCombiner.class);
     job.setMapOutputKeyClass(Text.class);
     job.setMapOutputValueClass(IntWritable.class);
 
     job.setCombinerClass(WCReducerCombiner.class);
     // * TODO: set the combiner class and the combiner output key and value classes
 
-    job.setReducerClass(WCIMCReducer.class);
+    job.setReducerClass(WCReducerCombiner.class);
     job.setOutputKeyClass(Text.class);
     job.setOutputValueClass(IntWritable.class);
 
@@ -75,9 +75,9 @@ public class WordCountCombiner extends Configured implements Tool {
     // TODO: set the number of reducers. This is optional and by default is 1
     // TODO: set the jar class
     // return job.waitForCompletion(true) ? 0 : 1; // this will execute the job
-	}
-	
-  public WordCountCombiner (String[] args) {
+  }
+
+  public WordCountCombiner(String[] args) {
 
     if (args.length != 3) {
       System.out.println("Usage: WordCountCombiner <num_reducers> <input_path> <output_path>");
@@ -87,40 +87,41 @@ public class WordCountCombiner extends Configured implements Tool {
     this.inputPath = new Path(args[1]);
     this.outputDir = new Path(args[2]);
   }
-  
+
   public static void main(String args[]) throws Exception {
 
     int res = ToolRunner.run(new Configuration(), new WordCountCombiner(args), args);
     System.exit(res);
   }
-}
 
-class WCMapperCombiner extends Mapper<LongWritable, Text, Text, LongWritable> {
 
-  private Text word = new Text();
-  private final static LongWritable ONE = new LongWritable(1);
+  class WCMapperCombiner extends Mapper<LongWritable, Text, Text, LongWritable> {
 
-  @Override
-  protected void map(LongWritable offset, Text text, Context context) throws IOException, InterruptedException {
+    private Text word = new Text();
+    private final LongWritable ONE = new LongWritable(1);
 
-    StringTokenizer iter = new StringTokenizer(text.toString());
-    while (iter.hasMoreTokens()) {
-      this.word.set(iter.nextToken());
-      context.write(this.word, ONE);
+    @Override
+    protected void map(LongWritable offset, Text text, Context context) throws IOException, InterruptedException {
+
+      StringTokenizer iter = new StringTokenizer(text.toString());
+      while (iter.hasMoreTokens()) {
+        this.word.set(iter.nextToken());
+        context.write(this.word, ONE);
+      }
     }
+
   }
 
-}
+  class WCReducerCombiner extends Reducer<Text, LongWritable, Text, LongWritable> {
 
-class WCReducerCombiner extends Reducer<Text, LongWritable, Text, LongWritable> {
+    @Override
+    protected void reduce(Text word, Iterable<LongWritable> values, Context context) throws IOException, InterruptedException {
 
-  @Override
-  protected void reduce(Text word, Iterable<LongWritable> values, Context context) throws IOException, InterruptedException {
-
-    long accumulator = 0;
-    for (LongWritable value : values) { //comupte the sum
-      accumulator += value.get();
+      long accumulator = 0;
+      for (LongWritable value : values) { //comupte the sum
+        accumulator += value.get();
+      }
+      context.write(word, new LongWritable(accumulator));
     }
-    context.write(word, new LongWritable(accumulator));
   }
 }
