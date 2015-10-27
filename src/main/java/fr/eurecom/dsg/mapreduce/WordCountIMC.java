@@ -37,15 +37,6 @@ public class WordCountIMC extends Configured implements Tool {
 
         //Job job = null; // TODO: define new job instead of null using conf e setting
 
-        // TODO: set job input format
-        // TODO: set map class and the map output key and value classes
-        // TODO: set reduce class and the reduce output key and value classes
-        // TODO: set job output format
-        // TODO: add the input file as job input (from HDFS)
-        // TODO: set the output path for the job results (to HDFS)
-        // TODO: set the number of reducers. This is optional and by default is 1
-        // TODO: set the jar class
-
         Configuration conf = this.getConf();
 
         Job job = new Job(conf, "Word Count");
@@ -91,11 +82,10 @@ public class WordCountIMC extends Configured implements Tool {
     }
 
 
-    class WCIMCMapper extends Mapper<LongWritable, Text, Text, IntWritable> { // TODO: change Object to output value type
+    static class WCIMCMapper extends Mapper<LongWritable, Text, Text, IntWritable> { // TODO: change Object to output value type
 
-        //    private IntWritable ONE = new IntWritable(1);
+        //private IntWritable ONE = new IntWritable(1);
         private Text textValue = new Text();
-
         HashMap<String, Integer> map = new HashMap<String, Integer>();
 
         @Override
@@ -103,8 +93,6 @@ public class WordCountIMC extends Configured implements Tool {
 
             String line = value.toString();
             String[] words = line.split("\\s+"); //split string to tokens
-
-            int length = words.length;
 
             for (String word : words) {
                 if (map.containsKey(word)) {
@@ -124,10 +112,7 @@ public class WordCountIMC extends Configured implements Tool {
         // the in-memory combiner technique
     }
 
-    class WCIMCReducer extends Reducer<Text, // TODO: change Object to input key
-            IntWritable, // TODO: change Object to input value type
-            Text, // TODO: change Object to output key type
-            IntWritable> { // TODO: change Object to output value type
+    static class WCIMCReducer extends Reducer<Text, IntWritable, Text, IntWritable> { // TODO: change Object to output value type
 
         @Override
         protected void reduce(Text word, // TODO: change Object to input key type

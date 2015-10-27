@@ -43,14 +43,14 @@ public class WordCountCombiner extends Configured implements Tool {
 
     job.setMapperClass(WCMapperCombiner.class);
     job.setMapOutputKeyClass(Text.class);
-    job.setMapOutputValueClass(IntWritable.class);
+    job.setMapOutputValueClass(LongWritable.class);
 
     job.setCombinerClass(WCReducerCombiner.class);
     // * TODO: set the combiner class and the combiner output key and value classes
 
     job.setReducerClass(WCReducerCombiner.class);
     job.setOutputKeyClass(Text.class);
-    job.setOutputValueClass(IntWritable.class);
+    job.setOutputValueClass(LongWritable.class);
 
     job.setOutputFormatClass(TextOutputFormat.class);
 
@@ -65,15 +65,6 @@ public class WordCountCombiner extends Configured implements Tool {
 
     return 0;
 
-    // TODO: define new job instead of null using conf e setting a name
-    // TODO: set job input format
-    // TODO: set map class and the map output key and value classes
-    // TODO: set reduce class and the reduce output key and value classes
-    // TODO: set job output format
-    // TODO: add the input file as job input (from HDFS)
-    // TODO: set the output path for the job results (to HDFS)
-    // TODO: set the number of reducers. This is optional and by default is 1
-    // TODO: set the jar class
     // return job.waitForCompletion(true) ? 0 : 1; // this will execute the job
   }
 
@@ -95,7 +86,7 @@ public class WordCountCombiner extends Configured implements Tool {
   }
 
 
-  class WCMapperCombiner extends Mapper<LongWritable, Text, Text, LongWritable> {
+  static class WCMapperCombiner extends Mapper<LongWritable, Text, Text, LongWritable> {
 
     private Text word = new Text();
     private final LongWritable ONE = new LongWritable(1);
@@ -112,7 +103,7 @@ public class WordCountCombiner extends Configured implements Tool {
 
   }
 
-  class WCReducerCombiner extends Reducer<Text, LongWritable, Text, LongWritable> {
+  static class WCReducerCombiner extends Reducer<Text, LongWritable, Text, LongWritable> {
 
     @Override
     protected void reduce(Text word, Iterable<LongWritable> values, Context context) throws IOException, InterruptedException {

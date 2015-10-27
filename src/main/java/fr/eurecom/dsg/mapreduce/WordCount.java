@@ -65,19 +65,6 @@ public class WordCount extends Configured implements Tool {
 
       return 0;
 
-      // TODO: define new job instead of null using conf
-
-      // TODO: set job input format
-      // TODO: set map class and the map output key and value classes
-      // TODO: set reduce class and the reduce output key and value classes
-      // TODO: set job output format
-      // TODO: add the input file as job input (from HDFS) to the variable
-      //       inputPath
-      // TODO: set the output path for the job results (to HDFS) to the variable
-      //       outputPath
-      // TODO: set the number of reducers using variable numberReducers
-      // TODO: set the jar class
-
       // return job.waitForCompletion(true) ? 0 : 1; // this will execute the job
   }
 
@@ -102,9 +89,10 @@ public class WordCount extends Configured implements Tool {
 
         private IntWritable writableSum = new IntWritable();
 
-        @Override //¸²¸Ç·½·¨
+        @Override
         protected void reduce(Text key, Iterable<IntWritable> values, Context context)
                 throws IOException, InterruptedException {
+
             int sum = 0;
             for (IntWritable value : values)
                 sum += value.get();
